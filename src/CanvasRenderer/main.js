@@ -1,4 +1,3 @@
-'use strict';
 var renderImageToCanvas = require('./renderImageToCanvas.js');
 
 /* List of known issues:
@@ -30,7 +29,7 @@ var renderImageToCanvas = require('./renderImageToCanvas.js');
 */
 
 // N.B Considering the number of issues with node canvas and how difficult it is to install for some configurations
-// and how slow it performs some task like blendings and filters (it has no shader) it is very likely that it will be replaced by a WebGL 
+// and how slow it performs some task like blendings and filters (it has no shader) it is very likely that it will be replaced by a WebGL
 // vectorial rendering library.
 
 function CanvasRenderer() {

@@ -1,4 +1,3 @@
-'use strict';
 
 // TODO:
 // - bevel filter
@@ -177,6 +176,7 @@ function blend(source, destination, inner, knockout, onTop, hideDestination) {
 }
 
 function blurAlphaHorizontal(pixelsIn, pixelsOut, radius1, w, h) {
+	radius1 /= 2;
 	var radius2 = radius1 + 1;
 	var blurCoeff = 1 / (radius1 + radius2);
 
@@ -218,6 +218,7 @@ function blurAlphaHorizontal(pixelsIn, pixelsOut, radius1, w, h) {
 }
 
 function blurAlphaVertical(pixelsIn, pixelsOut, radius1, w, h) {
+	radius1 /= 2;
 	var radius2 = radius1 + 1;
 	var blurCoeff = 1 / (radius1 + radius2);
 	var offset = 4 * w;
@@ -258,7 +259,7 @@ function blurAlphaVertical(pixelsIn, pixelsOut, radius1, w, h) {
 	}
 }
 
-function glow(context, params, dim, bounds, color, angle, distance) {
+function glow(context, params, dim, bounds, color, angle, distance, gradientColors, gradientRatios) {
 	/* jshint maxstatements: 100 */
 	/* jshint maxdepth: 10 */
 	var left   = dim.left;
@@ -266,29 +267,25 @@ function glow(context, params, dim, bounds, color, angle, distance) {
 	var right  = left + dim.width;
 	var bottom = top + dim.height;
 
-	var r = color.red;
-	var g = color.green;
-	var b = color.blue;
-	var a = color.alpha;
 	var inner = params.inner;
 
-	var halfBlurX = Math.floor(params.blurX / 2);
-	var halfBlurY = Math.floor(params.blurY / 2);
+	var blurX = params.blurX;
+	var blurY = params.blurY;
 	var nbPasses  = params.numPasses;
 
 	var dx = Math.round(Math.cos(angle) * distance);
 	var dy = Math.round(Math.sin(angle) * distance);
 
 	// Determining bounds for the blur
-	var blurLeft   = Math.max(0,             Math.min(left,   left   + Math.min(dx, 0) - halfBlurX * nbPasses));
-	var blurRight  = Math.min(bounds.right,  Math.max(right,  right  + Math.max(dx, 0) + halfBlurX * nbPasses));
-	var blurTop    = Math.max(0,             Math.min(top,    top    + Math.min(dy, 0) - halfBlurY * nbPasses));
-	var blurBottom = Math.min(bounds.bottom, Math.max(bottom, bottom + Math.max(dy, 0) + halfBlurY * nbPasses));
+	var blurLeft   = Math.max(0,             Math.min(left,   left   + Math.min(dx, 0) - blurX * nbPasses));
+	var blurRight  = Math.min(bounds.right,  Math.max(right,  right  + Math.max(dx, 0) + blurX * nbPasses));
+	var blurTop    = Math.max(0,             Math.min(top,    top    + Math.min(dy, 0) - blurY * nbPasses));
+	var blurBottom = Math.min(bounds.bottom, Math.max(bottom, bottom + Math.max(dy, 0) + blurY * nbPasses));
 
-	// var blurLeft   = Math.max(0,             Math.round(Math.min(left,   left   - Math.abs(dx) - halfBlurX)));
-	// var blurRight  = Math.min(bounds.right,  Math.round(Math.max(right,  right  + Math.abs(dx) + halfBlurX)));
-	// var blurTop    = Math.max(0,             Math.round(Math.min(top,    top    - Math.abs(dy) - halfBlurY)));
-	// var blurBottom = Math.min(bounds.bottom, Math.round(Math.max(bottom, bottom + Math.abs(dy) + halfBlurY)));
+	// var blurLeft   = Math.max(0,             Math.round(Math.min(left,   left   - Math.abs(dx) - blurX)));
+	// var blurRight  = Math.min(bounds.right,  Math.round(Math.max(right,  right  + Math.abs(dx) + blurX)));
+	// var blurTop    = Math.max(0,             Math.round(Math.min(top,    top    - Math.abs(dy) - blurY)));
+	// var blurBottom = Math.min(bounds.bottom, Math.round(Math.max(bottom, bottom + Math.abs(dy) + blurY)));
 
 	var w = blurRight - blurLeft;
 	var h = blurBottom - blurTop;
@@ -365,19 +362,33 @@ function glow(context, params, dim, bounds, color, angle, distance) {
 	}
 
 	for (var p = 0; p < nbPasses; p += 1) {
-		if (halfBlurX > 0) blurAlphaHorizontal(glowBuffer.data, blurBuffer.data, halfBlurX, w, h);
-		if (halfBlurY > 0) blurAlphaVertical(blurBuffer.data, glowBuffer.data, halfBlurY, w, h);
+		if (blurX > 0) blurAlphaHorizontal(glowBuffer.data, blurBuffer.data, blurX, w, h);
+		if (blurY > 0) blurAlphaVertical(blurBuffer.data, glowBuffer.data, blurY, w, h);
 	}
 
 	// context.putImageData(glowBuffer, blurLeft, blurTop);
 
-	// // Drawing bounding box (debugging purpose)
+	// Drawing bounding box (debugging purpose)
 	// context.setTransform(1, 0, 0, 1, 0, 0);
 	// context.globalAlpha = 1;
 	// context.lineWidth   = 2;
 	// context.strokeStyle = '#cc3333';
 	// context.strokeRect(blurLeft, blurTop, w, h);
 	// return;
+
+	var r, g, b, a;
+	if (gradientColors) {
+		// if gradient, use a dummy color to make the first glow pass
+		r = 255;
+		g = 255;
+		b = 255;
+		a = 1;
+	} else {
+		r = color.red;
+		g = color.green;
+		b = color.blue;
+		a = color.alpha;
+	}
 
 	// Applying colors
 	var strength = params.strength;
@@ -389,29 +400,71 @@ function glow(context, params, dim, bounds, color, angle, distance) {
 	}
 
 	var dstBuffer = context.getImageData(blurLeft, blurTop, w, h);
+	var dstPixels = dstBuffer.data;
 
-
-
-	// Rewriting the content of the buffer
-	// N.B should be unnecessary but there must be a bug somewhere
-	// as using putImageData on dstBuffer directly does not work
-
-
-	// THIS SHOULD WORK
-	// dstBuffer.data = blend(glowBuffer, dstBuffer, inner, params.knockout, false, params.compositeSource);
-	// context.putImageData(dstBuffer, blurLeft, blurTop);
-
-
-	// DOING THIS INSTEAD
 	var pixelData = blend(glowBuffer, dstBuffer, inner, params.knockout, false, !params.compositeSource);
 	var tmpBuffer = context.createImageData(w, h);
 	var tmpData   = tmpBuffer.data;
-	for (i = 0; i < nBytes; i += 4) {
-		tmpData[i]     = pixelData[i];
-		tmpData[i + 1] = pixelData[i + 1];
-		tmpData[i + 2] = pixelData[i + 2];
-		tmpData[i + 3] = pixelData[i + 3];
+	if (gradientColors) {
+		var maxGradient = 256;
+		var gradients = new Array(maxGradient);
+		var tier = 0;
+		var lastTier = gradientColors.length - 1;
+		for (var g = 0; g < maxGradient; g += 1) {
+			var r = 255 * g / maxGradient;
+			while (gradientRatios[tier] < r && tier < lastTier) {
+				tier += 1;
+			}
+
+			var ratioB = gradientRatios[tier];
+			var ratioA = (tier === 0) ? ratioB : gradientRatios[tier - 1];
+			var denominator = (ratioB - ratioA) || 1;
+			var ratio = (r - ratioA) / denominator;
+			if (ratio < 0) {
+				ratio = 0;
+			} else if (ratio > 1) {
+				ratio = 1;
+			}
+
+			var colorB = gradientColors[tier];
+			var colorA = (tier === 0) ? colorB : gradientColors[tier - 1];
+			gradients[g] = [
+				Math.round(colorA.red   * (1 - ratio) + colorB.red   * ratio),
+				Math.round(colorA.green * (1 - ratio) + colorB.green * ratio),
+				Math.round(colorA.blue  * (1 - ratio) + colorB.blue  * ratio),
+				(colorA.alpha * (1 - ratio) + colorB.alpha * ratio) * 255
+			];
+		}
+
+		var lastGradient = maxGradient - 1;
+		var gradientCoeff = lastGradient / 255;
+		for (i = 0; i < nBytes; i += 4) {
+			var c = dstPixels[i + 3] / 255;
+			var a = pixelData[i + 3];
+			var color = gradients[Math.min(Math.floor(gradientCoeff * a), lastGradient)];
+			tmpData[i]     = (1 - c) * color[0] + c * pixelData[i];
+			tmpData[i + 1] = (1 - c) * color[1] + c * pixelData[i + 1];
+			tmpData[i + 2] = (1 - c) * color[2] + c * pixelData[i + 2];
+			tmpData[i + 3] = (1 - c) * color[3] + c * a;
+		}
+	} else {
+		// Rewriting the content of the buffer
+		// N.B should be unnecessary but there must be a bug somewhere
+		// as using putImageData on dstBuffer directly does not work
+
+		// THIS SHOULD WORK
+		// dstBuffer.data = pixelData;
+		// context.putImageData(dstBuffer, blurLeft, blurTop);
+
+		// DOING THIS INSTEAD
+		for (i = 0; i < nBytes; i += 4) {
+			tmpData[i]     = pixelData[i];
+			tmpData[i + 1] = pixelData[i + 1];
+			tmpData[i + 2] = pixelData[i + 2];
+			tmpData[i + 3] = pixelData[i + 3];
+		}
 	}
+
 	context.putImageData(tmpBuffer, blurLeft, blurTop);
 
 
@@ -429,7 +482,7 @@ exports.dropShadow = function (context, params, dim, bounds) {
 };
 
 exports.glow = function (context, params, dim, bounds) {
-	glow(context, params, dim, bounds, params.glowColor, 0, 0);
+	glow(context, params, dim, bounds, params.glowColor, 0, 0, params.gradientColors, params.gradientRatios);
 };
 
 function blurVertical(pixelsIn, pixelsOut, radius1, w, h) {
@@ -589,19 +642,19 @@ exports.blur = function (context, params, dim, bounds) {
 	var right  = left + dim.width;
 	var bottom = top + dim.height;
 
-	var halfBlurX = Math.floor(params.blurX / 2);
-	var halfBlurY = Math.floor(params.blurY / 2);
+	var blurX = params.blurX;
+	var blurY = params.blurY;
 	var nbPasses  = params.numPasses;
 
-	if (halfBlurX === 0 && halfBlurY === 0) {
+	if (blurX === 0 && blurY === 0) {
 		return;
 	}
 
 	// Determining bounds for the blur
-	var blurLeft   = Math.max(0,             Math.round(Math.min(left,   left   - halfBlurX * nbPasses)));
-	var blurRight  = Math.min(bounds.right,  Math.round(Math.max(right,  right  + halfBlurX * nbPasses)));
-	var blurTop    = Math.max(0,             Math.round(Math.min(top,    top    - halfBlurY * nbPasses)));
-	var blurBottom = Math.min(bounds.bottom, Math.round(Math.max(bottom, bottom + halfBlurY * nbPasses)));
+	var blurLeft   = Math.max(0,             Math.round(Math.min(left,   left   - blurX * nbPasses)));
+	var blurRight  = Math.min(bounds.right,  Math.round(Math.max(right,  right  + blurX * nbPasses)));
+	var blurTop    = Math.max(0,             Math.round(Math.min(top,    top    - blurY * nbPasses)));
+	var blurBottom = Math.min(bounds.bottom, Math.round(Math.max(bottom, bottom + blurY * nbPasses)));
 
 	var w = blurRight - blurLeft;
 	var h = blurBottom - blurTop;
@@ -614,8 +667,8 @@ exports.blur = function (context, params, dim, bounds) {
 	var blurBuffer1 = context.createImageData(w, h);
 	var blurBuffer2 = context.getImageData(blurLeft, blurTop, w, h);
 	for (var p = 0; p < nbPasses; p += 1) {
-		if (halfBlurX > 0) blurVertical(blurBuffer2.data, blurBuffer1.data, halfBlurX, w, h);
-		if (halfBlurY > 0) blurHorizontal(blurBuffer1.data, blurBuffer2.data, halfBlurY, w, h);
+		if (blurX > 0) blurVertical(blurBuffer2.data, blurBuffer1.data, blurX, w, h);
+		if (blurY > 0) blurHorizontal(blurBuffer1.data, blurBuffer2.data, blurY, w, h);
 	}
 
 	context.putImageData(blurBuffer2, blurLeft, blurTop);
@@ -628,65 +681,6 @@ exports.blur = function (context, params, dim, bounds) {
 	dim.width  = w;
 	dim.height = h;
 };
-
-	// Gg = function(pixels, offset, c, d, e, f, h, l, w, r) {
- //            for (var y = 0; y < r; ++y) {
-
- //            	var p = 0;
- //            	var i2 = y * w * 4 + offset;
- //            	var i1 = i2;
- //                for (var x = 0; x < l; ++x) {
- //                	p += pixels[i1];
- //                	i1 += 4;
- //                }
-
- //                var i3 = c;
- //                for (x = 0; x < h; ++x) {
- //                	pixels[i3] = p * f;
- //                	if (x + l < w) {
- //                		p += pixels[i1];
- //                		i1 += 4;
- //                	}
- //                	i3 += d;
- //                }
-
- //                for (x = h; x + l + 4 <= w; x += 4) {
- //                	pixels[i3] = p * f;
- //                	i3 += d;
- //                	p += pixels[i1] - pixels[i2];
- //                	pixels[i3] = p * f;
- //                	i3 += d;
- //                	p += pixels[i1 + 4] - pixels[i2 + 4];
- //                	pixels[i3] = p * f;
- //                	i3 += d;
- //                	p += pixels[i1 + 8] - pixels[i2 + 8];
- //                	pixels[i3] = p * f;
- //                	i3 += d;
- //                	p += pixels[i1 + 12] - pixels[i2 + 12];
- //                	i2 += 16;
- //                	i1 += 16;
- //                }
-
- //                for (x = w - l; x + l < w; ++x) {
- //                	pixels[i3] = p * f;
- //                	p += pixels[i1] - pixels[i2];
- //                	i2 += 4;
- //                	i1 += 4;
- //                	i3 += d;
- //                }
-
- //                for (x = w - l; x < w; ++x) {
- //                	pixels[i3] = p * f;
- //                	p -= pixels[i2];
- //                	i2 += 4;
- //                	i3 += d;
- //                }
-
- //                c += e
- //            }
- //        },
-
-
 
 exports.bevel = function (context, params, dim, bounds) {
 	/* jshint maxstatements: 100 */
@@ -718,16 +712,16 @@ exports.bevel = function (context, params, dim, bounds) {
 	var hb = highlightColor.blue;
 	var ha = highlightColor.alpha;
 
-	var halfBlurX = Math.ceil(params.blurX / 2);
-	var halfBlurY = Math.ceil(params.blurY / 2);
+	var blurX = params.blurX;
+	var blurY = params.blurY;
 	var nbPasses  = params.numPasses;
-	var blurArea  = (2 * halfBlurX + 1) * (2 * halfBlurY + 1);
+	var blurArea  = (2 * blurX + 1) * (2 * blurY + 1);
 
 	// Determining bounds for the blur
-	var bevelLeft   = Math.max(0,             Math.min(left,   left   - halfBlurX * nbPasses - di));
-	var bevelRight  = Math.min(bounds.right,  Math.max(right,  right  + halfBlurX * nbPasses + di));
-	var bevelTop    = Math.max(0,             Math.min(top,    top    - halfBlurY * nbPasses - dj));
-	var bevelBottom = Math.min(bounds.bottom, Math.max(bottom, bottom + halfBlurY * nbPasses + dj));
+	var bevelLeft   = Math.max(0,             Math.min(left,   left   - blurX * nbPasses - di));
+	var bevelRight  = Math.min(bounds.right,  Math.max(right,  right  + blurX * nbPasses + di));
+	var bevelTop    = Math.max(0,             Math.min(top,    top    - blurY * nbPasses - dj));
+	var bevelBottom = Math.min(bounds.bottom, Math.max(bottom, bottom + blurY * nbPasses + dj));
 
 	var w = bevelRight  - bevelLeft;
 	var h = bevelBottom - bevelTop;
@@ -739,11 +733,11 @@ exports.bevel = function (context, params, dim, bounds) {
 
 	// Constructing blur
 	var blurBuffer = context.getImageData(bevelLeft, bevelTop, w, h);
-	if (halfBlurX !== 0 || halfBlurY !== 0) {
+	if (blurX !== 0 || blurY !== 0) {
 		var blurBufferTmp = context.createImageData(w, h);
 		for (var p = 0; p < nbPasses; p += 1) {
-			if (halfBlurX > 0) blurVertical(blurBuffer.data, blurBufferTmp.data, halfBlurX, w, h);
-			if (halfBlurY > 0) blurHorizontal(blurBufferTmp.data, blurBuffer.data, halfBlurY, w, h);
+			if (blurX > 0) blurVertical(blurBuffer.data, blurBufferTmp.data, blurX, w, h);
+			if (blurY > 0) blurHorizontal(blurBufferTmp.data, blurBuffer.data, blurY, w, h);
 		}
 	}
 

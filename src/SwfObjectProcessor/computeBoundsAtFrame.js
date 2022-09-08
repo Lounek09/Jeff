@@ -1,4 +1,11 @@
-'use strict';
+
+
+function Bounds (left, right, top, bottom) {
+	this.left   = left;
+	this.right  = right;
+	this.top    = top;
+	this.bottom = bottom;
+}
 
 var transformBound = function (transform, bounds) {
 	var a = transform[0];
@@ -46,26 +53,56 @@ var transformBound = function (transform, bounds) {
 	right   = Math.max(x, right);
 	bottom  = Math.max(y, bottom);
 
-	return { left: left, top: top, right: right, bottom: bottom };
+	return new Bounds(left, right, top, bottom);
 };
 
-function computeBoundsAtFrame(symbol, symbols, frame) {
-	/* jshint maxstatements: 100 */
+function computeInstanceBounds(child, symbols, sprites, frame) {
+	// Verifying that the child exists for given frame
+	if (frame < child.frames[0] || child.frames[1] < frame) {
+		return null;
+	}
 
-	var duration = symbol.duration || 1;
-	frame = frame % duration;
+	var bbox = computeBoundsAtFrame(child.id, symbols, sprites, frame - child.frames[0]);
+	if (bbox === null) {
+		return null;
+	}
+
+	var transform = child.transforms[frame - child.frames[0]];
+	var bounds = transformBound(transform, bbox);
+
+	var filters = child.filters && child.filters[frame];
+	if (filters) {
+		for (var f = 0; f < filters.length; f += 1) {
+			var filter = filters[f];
+			var radiusX = filter.blurX || 0;
+			var radiusY = filter.blurY || 0;
+			bounds.left   -= radiusX;
+			bounds.top    -= radiusY;
+			bounds.right  += radiusX;
+			bounds.bottom += radiusY;
+		}
+	}
+
+	return bounds;
+}
+
+function computeBoundsAtFrame(itemId, symbols, sprites, frame) {
+	/* jshint maxstatements: 100 */
+	var sprite = sprites[itemId];
+	if (sprite) {
+		return sprite.bounds;
+	}
+
+	var symbol = symbols[itemId];
+	if (!symbol) {
+		return null;
+	}
+
+	var frameCount = symbol.frameCount || 1;
+	frame = frame % frameCount;
 
 	if (symbol.bounds && symbol.bounds[frame]) {
 		return symbol.bounds[frame];
-	}
-
-	var children = symbol.children;
-	if (!children || children.length === 0) {
-		if (!symbol.bounds) {
-			symbol.bounds = [];
-		}
-		symbol.bounds[frame] = null;
-		return null;
 	}
 
 	// frame bounds
@@ -74,34 +111,25 @@ function computeBoundsAtFrame(symbol, symbols, frame) {
 	var fRight  = - Infinity;
 	var fBottom = - Infinity;
 
+	var children = symbol.children;
 	for (var c = children.length - 1; c >= 0; c -= 1) {
 		var child = children[c];
-		var childData = symbols[child.id];
 
-		if (!childData) {
-			// symbol not found in symbols!
+		if (child.maskEnd) {
 			continue;
 		}
 
 		// Verifying that the child exists for given frame
-		if (frame < child.frames[0] || child.frames[1] < frame || child.maskEnd) {
+		var bounds = computeInstanceBounds(child, symbols, sprites, frame);
+		if (!bounds) {
 			continue;
 		}
-
-		var bbox = computeBoundsAtFrame(childData, symbols, frame - child.frames[0]);
-		if (bbox === null) {
-			continue;
-		}
-
-		var transform = child.transforms[frame - child.frames[0]];
-		var bounds = transformBound(transform, bbox);
 
 		// child bounds
 		var cLeft   = bounds.left;
 		var cTop    = bounds.top;
 		var cRight  = bounds.right;
 		var cBottom = bounds.bottom;
-
 
 		if (child.maskStart) {
 			// Computing bounding box of masked elements
@@ -114,25 +142,11 @@ function computeBoundsAtFrame(symbol, symbols, frame) {
 
 			while (!children[--c].maskEnd) {
 				var clippedChild = children[c];
-				var clippedChildData = symbols[clippedChild.id];
 
-				if (!clippedChildData) {
-					// symbol not found in symbols!
+				var clippedBounds = computeInstanceBounds(clippedChild, symbols, sprites, frame);
+				if (!clippedBounds) {
 					continue;
 				}
-
-				// Verifying that the child exists for given frame
-				if (frame < clippedChild.frames[0] || clippedChild.frames[1] < frame) {
-					continue;
-				}
-
-				var clippedBbox = computeBoundsAtFrame(clippedChildData, symbols, frame - clippedChild.frames[0]);
-				if (clippedBbox === null) {
-					continue;
-				}
-
-				var clippedTransform = clippedChild.transforms[frame - clippedChild.frames[0]];
-				var clippedBounds    = transformBound(clippedTransform, clippedBbox);
 
 				var ccLeft   = clippedBounds.left;
 				var ccTop    = clippedBounds.top;
@@ -167,23 +181,13 @@ function computeBoundsAtFrame(symbol, symbols, frame) {
 
 	var frameBounds;
 	if (fLeft <= fRight && fTop <= fBottom) {
-		frameBounds = {
-			left:   fLeft,
-			right:  fRight,
-			top:    fTop,
-			bottom: fBottom
-		};
+		frameBounds = new Bounds(fLeft, fRight, fTop, fBottom);
 	} else {
 		frameBounds = null;
 	}
 
-	if (!symbol.bounds) {
-		symbol.bounds = [];
-	}
-
 	symbol.bounds[frame] = frameBounds;
-
-	return symbol.bounds[frame];
+	return frameBounds;
 }
 
 module.exports = computeBoundsAtFrame;

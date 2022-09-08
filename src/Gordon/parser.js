@@ -1,6 +1,5 @@
 // See http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/swf/pdf/swf-file-format-spec.pdf
 
-'use strict';
 
 var Base = require('./base.js');
 var Stream = require('./stream.js');
@@ -33,7 +32,7 @@ function dumpVal(str, max) {
 	if (len < str.length) hex += '...';
 	else hex = hex.substr(0, hex.length - 1);
 	return '(' + len + ' bytes)' + hex + ' | ' + txt;
-};
+}
 
 SwfParser.prototype = {
 
@@ -280,12 +279,12 @@ SwfParser.prototype = {
 		};
 
 		var sceneCount = stream.readEncodedU32();
-		for (var i = 0; i < sceneCount; i += 1) {
+		for (var s = 0; s < sceneCount; s += 1) {
 			sceneNames.push({ offset: stream.readEncodedU32(), name: stream.readString() });
 		}
 
 		var frameLabelCount = stream.readEncodedU32();
-		for (var i = 0; i < frameLabelCount; i += 1) {
+		for (var l = 0; l < frameLabelCount; l += 1) {
 			sceneLabels.push({ number: stream.readEncodedU32(), label: stream.readString() });
 		}
 
@@ -835,7 +834,7 @@ SwfParser.prototype = {
 		if (format === Base.bitmapFormats.COLORMAPPED) {
 			img.colorTableSize = stream.readUI8() + 1;
 		}
-	
+
 		img.colorData = stream.readBytes(len - (stream.offset - offset));
 		this.onData(img);
 		this._dictionary[id] = img;
@@ -1052,9 +1051,20 @@ SwfParser.prototype = {
 	// console.error('numGlyphs is', numGlyphs)
 
 			n = numGlyphs;
-			while (n--) { font.useWideOffsets? stream.readUI32(): stream.readUI16(); } // offsetTable
+			while (n--) {
+				if (font.useWideOffsets) {
+					stream.readUI32();
+				} else {
+					stream.readUI16();
+				}
+			} // offsetTable
 			// if (stream.offset - startingOffset !== len) {
-				font.useWideOffsets? stream.readUI32(): stream.readUI16(); // codeTableOffset
+			// codeTableOffset
+			if (font.useWideOffsets) {
+				stream.readUI32();
+			} else {
+				stream.readUI16();
+			}
 			// }
 
 	// console.error('offset 5', stream.offset)
@@ -1105,7 +1115,7 @@ SwfParser.prototype = {
 // console.error('offset 8', stream.offset, len)
 
 		if (stream.offset - startingOffset < len) {
-			console.warn('[_handleDefineFont3] Discrepancy in the number of bytes read: read ' + (stream.offset - startingOffset) + ' bytes, expected ' + len + ' bytes.')
+			console.warn('[_handleDefineFont3] Discrepancy in the number of bytes read: read ' + (stream.offset - startingOffset) + ' bytes, expected ' + len + ' bytes.');
 			stream.offset = startingOffset + len;
 		}
 
@@ -1189,8 +1199,8 @@ SwfParser.prototype = {
 				break;
 			}
 
-			var type = hdr >> 7;
-			if (type) {
+			var isTextRecord = hdr >> 7;
+			if (isTextRecord) {
 				var flags = hdr & 0x0f;
 				if (flags) {
 					var f = Base.textStyleFlags;
@@ -1313,6 +1323,31 @@ SwfParser.prototype = {
 					numPasses:       stream.readUB(4)
 				};
 				break;
+			case 5: //ConvolutionFilter
+				const matrixSize = {
+					x: stream.readUI8(),
+					y: stream.readUI8(),
+				};
+				const divisor = stream.readFloat();
+				const bias = stream.readFloat();
+				const matrix = [];
+				for (let i = 0; i < matrixSize.x * matrixSize.y; i++) {
+					matrix.push(stream.readFloat());
+				}
+				const defaultColor = stream.readRGBA();
+				const uselessValue = stream.readUB(6);
+				const clamp = stream.readUB(1);
+				const preserveAlpha = stream.readUB(1);
+				filter = {
+					type: 'convolution',
+					matrix,
+					divisor,
+					bias,
+					defaultColor,
+					clamp,
+					preserveAlpha,
+				};
+				break; // TODO implement
 			case 6: // ColorMatrixFilter
 				var m = [];
 				for (i = 20; i > 0; i--) m.push(stream.readFloat());
@@ -1321,10 +1356,28 @@ SwfParser.prototype = {
 					matrix: m
 				};
 				break;
-			//not handled yet:
-			case 5: //ConvolutionFilter
 			case 7: //GradientBevelFilter
-				throw new Error('Unhandled filter: ' + filterId);
+				var numColors = stream.readUI8();
+				var gc = [], gr = [];
+				for (i = numColors; i > 0; i--) gc.push(stream.readRGBA());
+				for (i = numColors; i > 0; i--) gr.push(stream.readUI8());
+
+				filter = {
+					type: 'gradient bevel',
+					gradientColors:  gc,
+					gradientRatios:  gr,
+					blurX:           stream.readFixed(),
+					blurY:           stream.readFixed(),
+					angle:           stream.readFixed(),
+					distance:        stream.readFixed(),
+					strength:        stream.readFixed8(),
+					inner:           stream.readUB(1),
+					knockout:        stream.readUB(1),
+					compositeSource: stream.readUB(1),
+					onTop: stream.readUB(1),
+					numPasses: stream.readUB(4),
+				};
+				break; // TODO implement
 			default:
 				throw new Error('Invalid filter code: ' + filterId);
 			}
