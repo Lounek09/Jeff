@@ -3,7 +3,7 @@
 var zlib = require('zlib');
 
 function Stream(data){
-	this._buffer = new Buffer(data);
+	this._buffer = Buffer.from(data);
 	this._nBytes = data.length;
 	this.offset  = 0;
 

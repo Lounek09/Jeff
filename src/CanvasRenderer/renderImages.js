@@ -121,12 +121,8 @@ CanvasRenderer.prototype._setSpriteDimensions = function (sprites, spriteMaxDims
 		var maxWidth  = rendersImage ? w : spriteMaxDim.width;
 		var maxHeight = rendersImage ? h : spriteMaxDim.height;
 
-		var spriteWidth;
-		var spriteHeight;
 		if (maxWidth === 0 || maxHeight === 0) {
 			spriteRatio  = 0;
-			spriteWidth  = 1;
-			spriteHeight = 1;
 		} else {
 			var widthRatio   = w / maxWidth;
 			var heightRatio  = h / maxHeight;
@@ -137,13 +133,8 @@ CanvasRenderer.prototype._setSpriteDimensions = function (sprites, spriteMaxDims
 				spriteRatio /= heightRatio;
 			}
 
-			spriteWidth  = Math.ceil(w * spriteRatio);
-			spriteHeight = Math.ceil(h * spriteRatio);
-
-			var ratioToMaxDim = Math.sqrt((this._options.maxImageDim * this._options.maxImageDim) / (spriteWidth * spriteHeight));
+			var ratioToMaxDim = Math.sqrt((this._options.maxImageDim * this._options.maxImageDim) / (Math.ceil(w * spriteRatio) * Math.ceil(h * spriteRatio)));
 			if (ratioToMaxDim < 1) {
-				spriteWidth  *= ratioToMaxDim;
-				spriteHeight *= ratioToMaxDim;
 				spriteRatio  *= ratioToMaxDim;
 			}
 		}
@@ -156,8 +147,8 @@ CanvasRenderer.prototype._setSpriteDimensions = function (sprites, spriteMaxDims
 			h:  h,
 			sx: 0,
 			sy: 0,
-			sw: spriteWidth,
-			sh: spriteHeight,
+			sw: w * spriteRatio,
+			sh: h * spriteRatio,
 			dx: x * spriteRatio,
 			dy: y * spriteRatio,
 			ratio:  spriteRatio
@@ -193,8 +184,8 @@ CanvasRenderer.prototype._renderSprites = function (sprites, spriteDims, imageMa
 		var sprite    = sprites[id];
 		var dimensions = spriteDims[id];
 
-		canvas.width  = dimensions.sw;
-		canvas.height = dimensions.sh;
+		canvas.width  = Math.ceil(dimensions.sw);
+		canvas.height = Math.ceil(dimensions.sh);
 		if (sprite.isShape) {
 			var transform = [dimensions.ratio, 0, 0, dimensions.ratio, - dimensions.dx, - dimensions.dy];
 			this._drawShapes(sprite.shapes, canvas, context, transform);

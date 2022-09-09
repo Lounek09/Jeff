@@ -134,9 +134,14 @@ CanvasRenderer.prototype._outlineShapes = function (context, shapes, transform, 
 		var matrix = fill.matrix;
 		var stops  = fill.stops;
 
-		var scaleX = matrix.scaleX === 0 ? 1 : matrix.scaleX;
-		var scaleY = matrix.scaleY === 0 ? 1 : matrix.scaleY;
-		transform = multiplyTransforms(transform, [scaleX, matrix.skewX, matrix.skewY, scaleY, matrix.moveX, matrix.moveY]);
+		// matrix can sometimes have a scale of zero, flash doesn't seem to care but canvas won't draw anything
+		matrix.moveX = matrix.scaleX ? matrix.moveX : 0;
+		matrix.moveY = matrix.scaleX ? matrix.moveY : 0;
+		matrix.scaleX = matrix.scaleX || 1;
+		matrix.scaleY = matrix.scaleY || 1;
+
+		context.transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+		context.transform(matrix.scaleX, matrix.skewX, matrix.skewY, matrix.scaleY, matrix.moveX, matrix.moveY);
 
 		scale = 1;
 		if (!line.noHScale) {
@@ -146,7 +151,6 @@ CanvasRenderer.prototype._outlineShapes = function (context, shapes, transform, 
 		}
 
 		context.lineWidth = Math.max(line.width, 1) / scale;
-		context.transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
 
 		var gradient;
 		switch (fill.type) {
@@ -166,7 +170,6 @@ CanvasRenderer.prototype._outlineShapes = function (context, shapes, transform, 
 			color = stop.color;
 
 			alpha = ((color.alpha === undefined) ? 1 : color.alpha);
-			alpha = alpha === 0 ? 0.0001 : alpha;
 			gradient.addColorStop(stop.offset, 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' + Math.pow(alpha, 1 / this._options.outlineEmphasis) + ')');
 		}
 		context.strokeStyle = gradient;
@@ -192,7 +195,14 @@ CanvasRenderer.prototype._fillShapes = function (context, canvas, shapes, transf
 		this._createPath(context, shapes, transform, false);
 		alpha = isMask ? 1 : ((fill.alpha === undefined) ? 1 : fill.alpha);
 		context.fillStyle = 'rgba(' + fill.red + ',' + fill.green + ',' + fill.blue + ',' + alpha + ')';
-		context.fill();
+		context.fill('evenodd');
+		if(!isMask) {
+			// Improves upon the double-edge alpha problem.
+			context.clip();
+			context.lineWidth = 1;
+			context.strokeStyle = context.fillStyle;
+			context.stroke();
+		}
 	} else if (fill.type === 'pattern') {
 		matrix = fill.matrix;
 
@@ -201,19 +211,13 @@ CanvasRenderer.prototype._fillShapes = function (context, canvas, shapes, transf
 		imgCanvas.width  = canvas.width;
 		imgCanvas.height = canvas.height;
 
+		// matrix can sometimes have a scale of zero, flash doesn't seem to care but canvas won't draw anything
+		matrix.moveX = matrix.scaleX ? matrix.moveX : 0;
+		matrix.moveY = matrix.scaleX ? matrix.moveY : 0;
+		matrix.scaleX = matrix.scaleX || 1;
+		matrix.scaleY = matrix.scaleY || 1;
+
 		imgContext.transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
-		if (matrix.moveX - transform[4] < 0) {
-			matrix.moveX = 0;
-		}
-		if (matrix.moveY - transform[5] < 0) {
-			matrix.moveY = 0;
-		}
-		if (matrix.moveX > canvas.width) {
-			matrix.moveX = canvas.width;
-		}
-		if (matrix.moveY > canvas.height) {
-			matrix.moveY = canvas.height;
-		}
 		imgContext.transform(matrix.scaleX, matrix.skewX, matrix.skewY, matrix.scaleY, matrix.moveX, matrix.moveY);
 		imgContext.drawImage(this._images[fill.image.id], 0, 0);
 
@@ -222,30 +226,22 @@ CanvasRenderer.prototype._fillShapes = function (context, canvas, shapes, transf
 		imgContext.setTransform(1, 0, 0, 1, 0, 0);
 		this._createPath(imgContext, shapes, transform, false);
 		imgContext.fillStyle = '#00ff00';
-		imgContext.fill();
+		imgContext.fill('evenodd');
 
 		context.drawImage(imgCanvas, 0, 0);
 	} else {
 		this._createPath(context, shapes, transform, false);
 
 		matrix = fill.matrix;
-		var scaleX = matrix.scaleX === 0 ? 1 : matrix.scaleX;
-		var scaleY = matrix.scaleY === 0 ? 1 : matrix.scaleY;
-		context.transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
-		if (matrix.moveX - transform[4] < 0) {
-			matrix.moveX = 0;
-		}
-		if (matrix.moveY - transform[5] < 0) {
-			matrix.moveY = 0;
-		}
-		if (matrix.moveX > canvas.width) {
-			matrix.moveX = canvas.width;
-		}
-		if (matrix.moveY > canvas.height) {
-			matrix.moveY = canvas.height;
-		}
-		context.transform(scaleX, matrix.skewX, matrix.skewY, scaleY, matrix.moveX, matrix.moveY);
 
+		// matrix can sometimes have a scale of zero, flash doesn't seem to care but canvas won't draw anything
+		matrix.moveX = matrix.scaleX ? matrix.moveX : 0;
+		matrix.moveY = matrix.scaleX ? matrix.moveY : 0;
+		matrix.scaleX = matrix.scaleX || 1;
+		matrix.scaleY = matrix.scaleY || 1;
+
+		context.transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+		context.transform(matrix.scaleX, matrix.skewX, matrix.skewY, matrix.scaleY, matrix.moveX, matrix.moveY);
 		var gradient;
 		switch (fill.type) {
 		case 'focal-radial':
@@ -266,12 +262,19 @@ CanvasRenderer.prototype._fillShapes = function (context, canvas, shapes, transf
 			color = stop.color;
 
 			alpha = ((color.alpha === undefined) ? 1 : color.alpha);
-			alpha = alpha === 0 ? 0.0001 : alpha;
 			gradient.addColorStop(stop.offset, 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' + alpha + ')');
 		}
 
 		context.fillStyle = gradient;
-		context.fill();
+		context.fill('evenodd');
+
+		if(!isMask) {
+			// Improves upon the double-edge alpha problem.
+			context.clip();
+			context.lineWidth = 1;
+			context.strokeStyle = context.fillStyle;
+			context.stroke();
+		}
 	}
 
 	context.restore();

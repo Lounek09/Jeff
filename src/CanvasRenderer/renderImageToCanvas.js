@@ -37,7 +37,7 @@ function renderJpg(swfObject, whenDone) {
 }
 
 function inflate(strdata, onData) {
-	var data = new Buffer(strdata);
+	var data = Buffer.from(strdata);
 	zlib.inflate(data, function (error, buffer) {
 		if (error) throw new Error('Invalid compressed data. ' + error);
 		onData(buffer);
@@ -46,7 +46,7 @@ function inflate(strdata, onData) {
 
 function translateJpg(swfObject, whenDone) {
 	// Image creation
-	var uri = 'data:image/jpeg;base64,' + new Buffer(swfObject.data).toString('base64');
+	var uri = 'data:image/jpeg;base64,' + Buffer.from(swfObject.data).toString('base64');
 	var image = new Image();
 	image.src = uri;
 
