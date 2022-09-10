@@ -271,21 +271,20 @@ IDENTITY_COLOR     = [1, 1, 1, 1, 0, 0, 0, 0];
 
 CanvasRenderer.prototype._renderFrames = function (imageMap, spriteProperties) {
 
-	var fixedSize = this._options.fixedSize;
-	var ratio     = this._extractor._fileGroupRatio;
+	const fixedSize = this._options.fixedSize;
+	const ratio = this._extractor._fileGroupRatio;
 
-	for (var className in this._extractor._classGroupList) {
+	for (const className in this._extractor._classGroupList) {
+		const classId = this._extractor._classGroupList[className];
+		const symbol  = this._extractor._symbols[classId];
 
-		var classId = this._extractor._classGroupList[className];
-		var symbol  = this._extractor._symbols[classId];
-
-		var bounds = symbol.containerBounds || symbol.bounds;
+		const bounds = symbol.containerBounds || symbol.bounds;
 		if (!bounds) {
 			continue;
 		}
 
-		var frameCount = symbol.frameCount;
-		var instance = new SymbolInstance(classId, bounds);
+		const frameCount = symbol.frameCount;
+		const instance = new SymbolInstance(classId, bounds);
 
 		var f, frames = [];
 		if (this._options.renderFrames instanceof Array) {
@@ -320,7 +319,8 @@ CanvasRenderer.prototype._renderFrames = function (imageMap, spriteProperties) {
 				y: frameCanvas.y,
 				w: frameCanvas.w,
 				h: frameCanvas.h,
-				sx: 0, sy: 0,
+				sx: 0,
+				sy: 0,
 				sw: canvas.width,
 				sh: canvas.height,
 				frameId: frameId

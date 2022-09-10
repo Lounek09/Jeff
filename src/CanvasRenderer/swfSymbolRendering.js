@@ -89,7 +89,7 @@ CanvasRenderer.prototype._renderSymbol = function (globalCanvas, globalContext, 
 	var matrix = multiplyTransforms(parentTransform, transform);
 	var color  = multiplyColors(parentColor, tint);
 
-	var sprite = this._extractor._sprites[id];
+	var sprite = this._extractor._items[id];
 	var symbol = this._extractor._symbols[id];
 	if (!sprite && !symbol) {
 		// element not found!
