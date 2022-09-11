@@ -269,8 +269,8 @@ function glow(context, params, dim, bounds, color, angle, distance, gradientColo
 
 	var inner = params.inner;
 
-	var blurX = params.blurX;
-	var blurY = params.blurY;
+	var blurX = params.blurX * dim.ratio;
+	var blurY = params.blurY * dim.ratio;
 	var nbPasses  = params.numPasses;
 
 	var dx = Math.round(Math.cos(angle) * distance);
@@ -637,14 +637,14 @@ function blurHorizontal(pixelsIn, pixelsOut, radius1, w, h) {
 exports.blur = function (context, params, dim, bounds) {
 	/* jshint maxstatements: 100 */
 	/* jshint maxdepth: 10 */
-	var left   = dim.left;
-	var top    = dim.top;
-	var right  = left + dim.width;
+	var left = dim.left;
+	var top = dim.top;
+	var right = left + dim.width;
 	var bottom = top + dim.height;
 
-	var blurX = params.blurX;
-	var blurY = params.blurY;
-	var nbPasses  = params.numPasses;
+	var blurX = params.blurX * (dim.ratio / 4);
+	var blurY = params.blurY * (dim.ratio / 4);
+	var nbPasses = params.numPasses;
 
 	if (blurX === 0 && blurY === 0) {
 		return;
@@ -696,7 +696,7 @@ exports.bevel = function (context, params, dim, bounds) {
 	var ni = Math.cos(angle);
 	var nj = Math.sin(angle);
 
-	var d  = params.distance;
+	var d  = params.distance * dim.ratio;
 	var di = Math.ceil(ni * d);
 	var dj = Math.ceil(nj * d);
 

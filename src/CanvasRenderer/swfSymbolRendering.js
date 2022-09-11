@@ -253,7 +253,8 @@ CanvasRenderer.prototype._renderSymbol = function (globalCanvas, globalContext, 
 			right:  Math.ceil(right),
 			bottom: Math.ceil(bottom),
 			width:  Math.ceil(right  - Math.floor(left)),
-			height: Math.ceil(bottom - Math.floor(top))
+			height: Math.ceil(bottom - Math.floor(top)),
+			ratio: this._extractor._fileGroupRatio
 		};
 
 		// Boundaries of the canvas on which to apply pixel manipulations
