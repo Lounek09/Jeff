@@ -442,11 +442,13 @@ Jeff.prototype._generateImageName = function (imgName) {
 };
 
 Jeff.prototype._writeImagesToDisk = function (spritesImages) {
+	const multipleFiles = spritesImages.length;
+
 	for (var i = 0; i < spritesImages.length; i += 1) {
 		var spritesImage = spritesImages[i];
 		let imageName = path.join(this._fileGroupName, spritesImage.name);
 
-		if (this._options.onlyOneFrame) {
+		if (this._options.onlyOneFrame && !multipleFiles) {
 			imageName = this._fileGroupName + '.png';
 		}
 		if (this._options.exportAtRoot) {
