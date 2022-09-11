@@ -136,13 +136,22 @@ SwfParser.prototype = {
 			while (true) {
 				var hdr = stream.readUI16();
 				code = hdr >> 6;
-				var len = hdr & 0x3f,
-					handle = h[code];
-				if (0x3f === len) { len = stream.readUI32(); }
-				if (!code || code === SHOW_FRAME) break;
+				var len = hdr & 0x3f;
+				var handle = h[code];
+				if (0x3f === len) {
+					len = stream.readUI32();
+				}
+				if (!code || code === SHOW_FRAME) {
+					break;
+				}
 				numTags++;
-				if (this[handle]) { this._handleTag(handle, stream, len, frm); }
-				else { this._handleUnhandledTag(handle, code, stream, stream.offset, len); }
+
+				if (this[handle]) {
+					this._handleTag(handle, stream, len, frm);
+				} else {
+					this._handleUnhandledTag(handle, code, stream, stream.offset, len);
+				}
+
 				if (this.aborting) {
 					console.warn('Aborting the parsing of ' + this.swfName);
 					cb('Parsing failed');
@@ -209,9 +218,11 @@ SwfParser.prototype = {
 		try {
 			this[handle](stream, offset, len, frm);
 			var lenRead = stream.offset - offset;
-			if (lenRead !== len) throw new Error('Parsing error in ' + handle + ': actual len read=' + lenRead + ' VS intended len=' + len);
+			if (lenRead !== len) {
+				throw new Error('Parsing error in ' + handle + ': actual len read=' + lenRead + ' VS intended len=' + len);
+			}
 		} catch (e) {
-			console.warn(this.swfName + ': ' + e);
+			console.warn(this.swfName + ': ' + e.stack);
 			stream.seek(offset, true);
 			var val = stream.readString(len);
 			console.warn(this.swfName + ': Mishandled tag:', handle.substr(7) + '=' + dumpVal(val, 500) + ' total length:' + len + ' starting at:' + offset);
@@ -221,8 +232,12 @@ SwfParser.prototype = {
 
 	_handleUnhandledTag: function (handle, code, stream, offset, len) {
 		//if (! frm.unknownTags) frm.unknownTags = [];
-		if (!handle) code = 'code ' + code;
-		else code = handle.substr(7) + '/code ' + code;
+		if (!handle) {
+			code = 'code ' + code;
+		} else {
+			code = handle.substr(7) + '/code ' + code;
+		}
+
 		var val = stream.readString(len);
 		//frm.unknownTags.push(code+'='+dumpVal(val,50));
 		console.warn(this.swfName + ': Unhandled tag:', code + '=' + dumpVal(val, 30) + ' total length:' + len);
@@ -876,8 +891,9 @@ SwfParser.prototype = {
 			}
 		}
 
-		img.data = this._jpegTables && this._jpegTables.length > 1 ?
-			Buffer.concat(this._jpegTables.slice(0, this._jpegTables.length - 2), data.slice(2)) : data;
+		img.data = this._jpegTables && this._jpegTables.length > 1
+			? Buffer.concat([this._jpegTables.slice(0, this._jpegTables.length - 2), data.slice(2)])
+			: data;
 
 		this.onData(img);
 		this._dictionary[id] = img;

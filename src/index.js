@@ -173,6 +173,7 @@ Jeff.prototype._extractFileGroups = function (swfUris, endExtractionCb) {
 				if (endExtractionCb) {
 					return endExtractionCb(error);
 				} else {
+					console.log(error);
 					throw new Error('Error!', error);
 				}
 			}

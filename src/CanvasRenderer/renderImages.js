@@ -278,6 +278,11 @@ CanvasRenderer.prototype._renderFrames = function (imageMap, spriteProperties) {
 		const classId = this._extractor._classGroupList[className];
 		const symbol  = this._extractor._symbols[classId];
 
+		if (!symbol) {
+			console.warn('[CanvasRenderer._renderFrames] symbol not found', classId);
+			continue;
+		}
+
 		const bounds = symbol.containerBounds || symbol.bounds;
 		if (!bounds) {
 			continue;
