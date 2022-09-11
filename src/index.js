@@ -442,7 +442,7 @@ Jeff.prototype._generateImageName = function (imgName) {
 };
 
 Jeff.prototype._writeImagesToDisk = function (spritesImages) {
-	const multipleFiles = spritesImages.length;
+	const multipleFiles = spritesImages.length > 1;
 
 	for (var i = 0; i < spritesImages.length; i += 1) {
 		var spritesImage = spritesImages[i];
