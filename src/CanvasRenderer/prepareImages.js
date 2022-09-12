@@ -43,6 +43,8 @@ CanvasRenderer.prototype._prepareImages = function () {
 	};
 
 	for (i = 0; i < imagesToPrepare.length; i += 1) {
-		this._renderImageToCanvas(imagesToPrepare[i], onWrittenCallBack);
+		if (imagesToPrepare[i]) {
+			this._renderImageToCanvas(imagesToPrepare[i], onWrittenCallBack);
+		}
 	}
 };

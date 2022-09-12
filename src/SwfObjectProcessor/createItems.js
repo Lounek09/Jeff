@@ -20,7 +20,7 @@ function createItem(id, swfObject) {
 			var scalingGrid = swfObject.scalingGrid;
 			if (scalingGrid) {
 				// Converting bounds from twips to pixels
-				symbol.scalingGrid = new Bounds(
+				item.scalingGrid = new Bounds(
 					scalingGrid.left   / 20,
 					scalingGrid.right  / 20,
 					scalingGrid.top    / 20,

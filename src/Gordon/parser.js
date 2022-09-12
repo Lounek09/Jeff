@@ -812,7 +812,13 @@ SwfParser.prototype = {
 		if (flags  & f.HAS_CLIP_DEPTH)        { character.clipDepth        = stream.readUI16(); }
 		if (flags2 & f.HAS_FILTER_LIST)       { character.filters          = this._readFilterList(stream); }
 		if (flags2 & f.HAS_BLEND_MODE)        { character.blendMode        = stream.readUI8(); }
-		if (flags2 & f.HAS_CACHE_AS_BITMAP)   { character.bitmapCache      = stream.readUI8(); }
+		if (flags2 & f.HAS_CACHE_AS_BITMAP)   {
+			if (stream.offset - offset < len) {
+				character.bitmapCache = stream.readUI8();
+			} else {
+				character.bitmapCache = 1;
+			}
+		}
 		if (flags2 & f.HAS_VISIBLE)           { character.visible          = stream.readUI8(); character.bgColor = stream.readRGBA(); }
 		if (flags2 & f.HAS_OPAQUE_BACKGROUND) { character.opaqueBackground = true; }
 		if (flags  & f.HAS_CLIP_ACTIONS) { //NOT HANDLED; we should be OK
