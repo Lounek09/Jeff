@@ -928,7 +928,7 @@ SwfParser.prototype = {
 				depth = stream.readUI16(),
 				state = 0x01,
 				character = {
-					id: d[objId].id,
+					id: d[objId] && d[objId].id,
 					depth: depth,
 					matrix: stream.readMatrix()
 				};

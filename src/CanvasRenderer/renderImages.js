@@ -432,14 +432,12 @@ CanvasRenderer.prototype.prerenderSymbols = function (symbols, sprites, imageMap
 		}
 
 		// getting maximum playable duration
-		var maxFrameCount = 1;
-		var appearances = elementSymbols[symbolId];
-		for (a = 0; a < appearances.length; a += 1) {
-			var appearance = appearances[a];
-			if (maxFrameCount < appearance.frameCount) {
+		let maxFrameCount = 1;
+		elementSymbols[symbolId].forEach((appearance) => {
+			if (appearance.frameCount > maxFrameCount) {
 				maxFrameCount = appearance.frameCount;
 			}
-		}
+		});
 
 		if (maxFrameCount >= symbol.frameCount) {
 			// cannot be trimmed
@@ -511,7 +509,7 @@ CanvasRenderer.prototype.prerenderSymbols = function (symbols, sprites, imageMap
 				break;
 			}
 
-			childElement = sprites[childId];
+			const childElement = sprites[childId];
 			if (!childElement) {
 				containsSymbol = true;
 				isSymbolStatic  = false;

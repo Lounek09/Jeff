@@ -91,7 +91,7 @@ CanvasRenderer.prototype._renderSymbol = function (globalCanvas, globalContext, 
 
 	var sprite = this._extractor._items[id];
 	var symbol = this._extractor._symbols[id];
-	if (!sprite && !symbol) {
+	if (!sprite && !symbol && !image) {
 		// element not found!
 		return;
 	}
@@ -135,24 +135,24 @@ CanvasRenderer.prototype._renderSymbol = function (globalCanvas, globalContext, 
 			// Transformation is applied within the drawshape function
 			this._drawShapes(sprite.shapes, localCanvas, localContext, matrix, isMask);
 		}
+	}
 
-		if (sprite.isImage) {
-			localContext.globalAlpha = alpha;
-			localContext.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+	if ((sprite && sprite.isImage) || this._images[id]) {
+		localContext.globalAlpha = alpha;
+		localContext.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
 
-			var image = this._images[id];
-			var x = bbox.left;
-			var y = bbox.top;
-			var width  = bbox.right  - x;
-			var height = bbox.bottom - y;
-			if (isMask) {
-				// If it is a mask, the rendered image should be a completely opaque rectangle
-				localContext.globalAlpha = 1;
-				localContext.fillStyle = '#ffffff';
-				localContext.fillRect(x, y, width, height);
-			} else {
-				localContext.drawImage(image, x, y, width, height);
-			}
+		var image = this._images[id];
+		var x = bbox.left;
+		var y = bbox.top;
+		var width  = bbox.right  - x;
+		var height = bbox.bottom - y;
+		if (isMask) {
+			// If it is a mask, the rendered image should be a completely opaque rectangle
+			localContext.globalAlpha = 1;
+			localContext.fillStyle = '#ffffff';
+			localContext.fillRect(x, y, width, height);
+		} else {
+			localContext.drawImage(image, x, y, width, height);
 		}
 	}
 
