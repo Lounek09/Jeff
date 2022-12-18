@@ -91,7 +91,7 @@ CanvasRenderer.prototype._renderSymbol = function (globalCanvas, globalContext, 
 
 	var sprite = this._extractor._items[id];
 	var symbol = this._extractor._symbols[id];
-	if (!sprite && !symbol && !image) {
+	if (!sprite && !symbol) {
 		// element not found!
 		return;
 	}

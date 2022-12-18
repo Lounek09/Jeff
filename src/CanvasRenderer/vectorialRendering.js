@@ -169,12 +169,19 @@ CanvasRenderer.prototype._outlineShapes = function (context, shapes, transform, 
 			break;
 		}
 
+		const offsets = [];
 		for (s = 0; s < stops.length; s += 1) {
 			var stop  = stops[s];
 			color = stop.color;
 
+			// Some swf have duplicate value for the same offset, flash take the first one so ignore the others
+			if (offsets.indexOf(stop.offset) !== -1) {
+				continue;
+			}
+
 			alpha = ((color.alpha === undefined) ? 1 : color.alpha);
 			gradient.addColorStop(stop.offset, 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' + Math.pow(alpha, 1 / this._options.outlineEmphasis) + ')');
+			offsets.push(stop.offset);
 		}
 		context.strokeStyle = gradient;
 	}
@@ -269,12 +276,20 @@ CanvasRenderer.prototype._fillShapes = function (context, canvas, shapes, transf
 		}
 
 		var stops = fill.stops;
+		const offsets = [];
 		for (s = 0; s < stops.length; s += 1) {
 			var stop  = stops[s];
+
+			// Some swf have duplicate value for the same offset, flash take the first one so ignore the others
+			if (offsets.indexOf(stop.offset) !== -1) {
+				continue;
+			}
+
 			color = stop.color;
 
 			alpha = ((color.alpha === undefined) ? 1 : color.alpha);
 			gradient.addColorStop(stop.offset, 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' + alpha + ')');
+			offsets.push(stop.offset);
 		}
 
 		context.fillStyle = gradient;
