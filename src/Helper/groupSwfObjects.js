@@ -5,16 +5,28 @@ function groupSwfObjects(swfObjectGroups) {
 	// Duplicated classes will be discared with respect to the priorities
 
 	var idOffset = 0;
+	function updateId(key, val) {
+		if (key === 'id') {
+			return val + idOffset;
+		}
+		if (val && typeof val === 'object') {
+			Object.entries(val).forEach(([key2, val2]) => {
+				val[key2] = updateId(key2, val2);
+				if (val[key2] === null || val[key2] === undefined) {
+					delete val[key2]; // clean Object
+				}
+			});
+		}
+		return val;
+	}
+
 	var swfObjects  = [];
 	var nGroups     = swfObjectGroups.length;
 	for (var g = 0; g < nGroups; g += 1) {
 		idOffset = swfObjects.length;
 
 		// Making a deep copy of swf objects with updated IDs
-		var updatedSwfObjects = cloneDeep(swfObjectGroups[g]);
-		updatedSwfObjects.forEach((swfObject) => {
-			swfObject.id = swfObject.id + idOffset;
-		});
+		var updatedSwfObjects = updateId('', cloneDeep(swfObjectGroups[g]));
 
 		var s, swfObject;
 		var nObjects = updatedSwfObjects.length;
