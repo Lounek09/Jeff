@@ -135,14 +135,10 @@ CanvasRenderer.prototype._outlineShapes = function (context, shapes, transform, 
 		var stops  = fill.stops;
 
 		// matrix can sometimes have a scale of zero, flash doesn't seem to care but canvas won't draw anything
-		if (!matrix.scaleX) {
-			matrix.moveX = matrix.skewX ? matrix.moveX : 0;
-			matrix.scaleX = matrix.skewX ? matrix.scaleX : 1;
-		}
-		if (!matrix.scaleY) {
-			matrix.moveY = matrix.skewY ? matrix.moveY : 0;
-			matrix.scaleY = matrix.skewY ? matrix.scaleY : 1;
-		}
+		matrix.moveX = matrix.scaleX ? matrix.moveX : 0;
+		matrix.moveY = matrix.scaleY ? matrix.moveY : 0;
+		matrix.scaleX = matrix.scaleX || 1;
+		matrix.scaleY = matrix.scaleY || 1;
 
 		context.transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
 		context.transform(matrix.scaleX, matrix.skewX, matrix.skewY, matrix.scaleY, matrix.moveX, matrix.moveY);
@@ -223,14 +219,10 @@ CanvasRenderer.prototype._fillShapes = function (context, canvas, shapes, transf
 		imgCanvas.height = canvas.height;
 
 		// matrix can sometimes have a scale of zero, flash doesn't seem to care but canvas won't draw anything
-		if (!matrix.scaleX) {
-			matrix.moveX = matrix.skewX ? matrix.moveX : 0;
-			matrix.scaleX = matrix.skewX ? matrix.scaleX : 1;
-		}
-		if (!matrix.scaleY) {
-			matrix.moveY = matrix.skewY ? matrix.moveY : 0;
-			matrix.scaleY = matrix.skewY ? matrix.scaleY : 1;
-		}
+		matrix.moveX = matrix.scaleX ? matrix.moveX : 0;
+		matrix.moveY = matrix.scaleY ? matrix.moveY : 0;
+		matrix.scaleX = matrix.scaleX || 1;
+		matrix.scaleY = matrix.scaleY || 1;
 
 		imgContext.transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
 		imgContext.transform(matrix.scaleX, matrix.skewX, matrix.skewY, matrix.scaleY, matrix.moveX, matrix.moveY);
@@ -250,14 +242,10 @@ CanvasRenderer.prototype._fillShapes = function (context, canvas, shapes, transf
 		matrix = fill.matrix;
 
 		// matrix can sometimes have a scale of zero, flash doesn't seem to care but canvas won't draw anything
-		if (!matrix.scaleX) {
-			matrix.moveX = matrix.skewX ? matrix.moveX : 0;
-			matrix.scaleX = matrix.skewX ? matrix.scaleX : 1;
-		}
-		if (!matrix.scaleY) {
-			matrix.moveY = matrix.skewY ? matrix.moveY : 0;
-			matrix.scaleY = matrix.skewY ? matrix.scaleY : 1;
-		}
+		matrix.moveX = matrix.scaleX ? matrix.moveX : 0;
+		matrix.moveY = matrix.scaleY ? matrix.moveY : 0;
+		matrix.scaleX = matrix.scaleX || 1;
+		matrix.scaleY = matrix.scaleY || 1;
 
 		context.transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
 		context.transform(matrix.scaleX, matrix.skewX, matrix.skewY, matrix.scaleY, matrix.moveX, matrix.moveY);
