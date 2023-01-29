@@ -1,5 +1,5 @@
 
-function generateMetaData(sprites, symbols, spriteProperties, frameRates, frameRate) {
+function generateMetaData(sprites, symbols, spriteProperties, frameRates, frameRate, avm2Information) {
 	var s;
 
 	var spritesData = {};
@@ -18,6 +18,10 @@ function generateMetaData(sprites, symbols, spriteProperties, frameRates, frameR
 
 			if (sprite.className) {
 				spriteData.className = sprite.className;
+				const avm2InfoWithClassName = avm2Information.find((info) => !!info.extends[sprite.className]);
+				if (avm2InfoWithClassName) {
+					spriteData.extends = avm2InfoWithClassName.extends[sprite.className];
+				}
 			}
 
 			if (sprite.duration !== 1) {
@@ -45,6 +49,11 @@ function generateMetaData(sprites, symbols, spriteProperties, frameRates, frameR
 			var symbolFrameRate = frameRates[symbol.className];
 			if (symbolFrameRate !== frameRate) {
 				symbolData.frameRate = symbolFrameRate;
+			}
+
+			const avm2InfoWithClassName = avm2Information.find((info) => !!info.extends[symbol.className]);
+			if (avm2InfoWithClassName) {
+				symbolData.extends = avm2InfoWithClassName.extends[symbol.className];
 			}
 		}
 

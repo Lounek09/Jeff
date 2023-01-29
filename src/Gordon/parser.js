@@ -3,6 +3,7 @@
 
 var Base = require('./base.js');
 var Stream = require('./stream.js');
+const Burton = require('../Burton/parser');
 
 function SwfParser() {}
 module.exports = SwfParser;
@@ -314,8 +315,13 @@ SwfParser.prototype = {
 			name: stream.readString(),
 			len: len,
 		};
+
+		const avm2Reader = new Burton(new Stream(stream.readBytes(len - (stream.offset - offset))), this.swfName);
+		avm2Reader.read();
+
+		action.extends = avm2Reader.toData();
+
 		this.onData(action);
-		this._skipEndOfTag('DoAbc', true, stream, offset, len);
 	},
 	_handleDoAction: function (stream, offset, len, frm) {
 		var actions = [];

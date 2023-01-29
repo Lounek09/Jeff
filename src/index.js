@@ -40,6 +40,7 @@ function Jeff(options) {
 	this._fileGroupRatio         = undefined; // Export ratio
 	this._swfObjectsPerFileGroup = undefined; // Array holding swf objects per file
 	this._swfObjects             = undefined; // Merged swf objects
+	this._avm2Information = []; // Array holding swf objects per file
 
 	this._symbols                = undefined; // Symbols corresponding to the swfObjects
 	this._sprites                = undefined;
@@ -209,6 +210,7 @@ Jeff.prototype._parseFile = function (swfName, nextSwfCb) {
 	var self = this;
 	var swfObjects = [];
 	var classes = [];
+	var avm2Information = [];
 	function onFileRead(error, swfData) {
 		if (error) return nextSwfCb(error);
 		self._parser.parse(swfName, swfData,
@@ -242,8 +244,8 @@ Jeff.prototype._parseFile = function (swfName, nextSwfCb) {
 						return;
 					}
 
-					// TODO: handle DoAbc
 					if (swfObject.type === 'DoAbc') {
+						avm2Information.push(swfObject);
 						return;
 					}
 
@@ -270,6 +272,7 @@ Jeff.prototype._parseFile = function (swfName, nextSwfCb) {
 				swfObjects[0].frameSize = self._frameSize;
 
 				self._swfObjectsPerFileGroup.push(swfObjects);
+				self._avm2Information = self._avm2Information.concat(avm2Information);
 				nextSwfCb(error);
 			}
 		);
@@ -335,7 +338,7 @@ Jeff.prototype._extractClassGroup = function (spriteImages, spriteProperties) {
 		exportItemsData = helper.generateFrameByFrameData(this._symbols, spriteProperties, this._options.onlyOneFrame);
 	} else {
 		this._renderer.prerenderSymbols(this._symbols, this._sprites, spriteImages, spriteProperties);
-		exportItemsData = helper.generateMetaData(this._sprites, this._symbols, spriteProperties, this._frameRates, this._frameRate);
+		exportItemsData = helper.generateMetaData(this._sprites, this._symbols, spriteProperties, this._frameRates, this._frameRate, this._avm2Information);
 	}
 
 	// Applying post-process, if any
