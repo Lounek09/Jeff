@@ -755,6 +755,9 @@ CanvasRenderer.prototype.prerenderSymbols = function (symbols, sprites, imageMap
 				newSpriteId += 1;
 				child.id = newSpriteId;
 
+				if (!frameCanvas) {
+					continue;
+				}
 				this._renderSymbol(
 					frameCanvas.canvas,
 					frameCanvas.context,

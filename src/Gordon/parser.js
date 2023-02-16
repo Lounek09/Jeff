@@ -433,7 +433,6 @@ SwfParser.prototype = {
 
 	_handleDefineMorphShape: function (stream, offset, len, frm, v2morph) {
 		var id = stream.readUI16();
-		//console.log('DefineMorphShape ',id,offset,len,v2morph)
 		var shape = {
 				type:        'morph',
 				id:          id,
@@ -444,9 +443,8 @@ SwfParser.prototype = {
 			shape.startEdgeBounds = stream.readRect();
 			shape.endEdgeBounds   = stream.readRect();
 			//1 byte of flags:
-			var reserved = stream.readUB(5);
+			var reserved = stream.readUB(6);
 			if (reserved !== 0) throw new Error('Unknown flags: ' + reserved);
-			shape.usesFillWindingRule = stream.readUB(1);
 			shape.usesNonScalingStrokes = stream.readUB(1);
 			shape.usesScalingStrokes = stream.readUB(1);
 		}

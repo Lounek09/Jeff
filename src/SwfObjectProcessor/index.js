@@ -33,6 +33,17 @@ function processSwfObjects(swfObjects, allClasses, extractor) {
 	// Computing maximum dimensions per class for each sprite
 	computeDimensions(itemsById, allClasses);
 
-	return items;
+	const result = {
+		symbols: symbols,
+		sprites: sprites,
+		itemsById: itemsById,
+	};
+	// Add new items (morphShape for example)
+	Object.values(itemsById).forEach((item) => {
+		if (item.isSprite) {
+			result.sprites[item.id] = item;
+		}
+	});
+	return result;
 }
 module.exports = processSwfObjects;

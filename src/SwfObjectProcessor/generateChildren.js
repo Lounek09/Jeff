@@ -72,7 +72,7 @@ function createMorphedShape(items, symbol, ratio) {
 		isMorphed: true,
 		swfObject: swfObject,
 		maxDims:   {},
-		parents:   []
+		parents:   {}
 	};
 	items.push(morphedSymbol);
 

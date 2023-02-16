@@ -246,6 +246,19 @@ module.exports = Stream;
 				moveX: this.readSB(numBits), moveY: this.readSB(numBits)
 			};
 
+			if (!matrix.scaleX) {
+				matrix.scaleX = matrix.skewX ? 0 : 1;
+				matrix.moveX = matrix.skewX ? matrix.moveX : 0;
+			}
+			if (!matrix.scaleY) {
+				matrix.scaleY = matrix.skewY ? 0 : 1;
+				matrix.moveY = matrix.skewY ? matrix.moveY : 0;
+			}
+
+			// Bug with canvas
+			matrix.skewX = matrix.skewX || 0.00001;
+			matrix.skewY = matrix.skewY || 0.00001;
+
 			this.align();
 			return matrix;
 		},
