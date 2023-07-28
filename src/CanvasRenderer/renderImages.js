@@ -133,6 +133,10 @@ CanvasRenderer.prototype._setSpriteDimensions = function (sprites, spriteMaxDims
 				spriteRatio /= heightRatio;
 			}
 
+			if (this._options.wantedSize) {
+				var ratioWantedSize = Math.sqrt((this._options.wantedSize * this._options.wantedSize) / (Math.ceil(w * spriteRatio) * Math.ceil(h * spriteRatio)));
+				spriteRatio *= ratioWantedSize;
+			}
 			var ratioToMaxDim = Math.sqrt((this._options.maxImageDim * this._options.maxImageDim) / (Math.ceil(w * spriteRatio) * Math.ceil(h * spriteRatio)));
 			if (ratioToMaxDim < 1) {
 				spriteRatio  *= ratioToMaxDim;
@@ -214,7 +218,7 @@ function SymbolInstance(id, bounds, filters, blendModes) {
 	this.blendModes = blendModes;
 }
 
-SymbolInstance.prototype.constructFrame = function (frame, ratio, fixedSize) {
+SymbolInstance.prototype.constructFrame = function (frame, ratio, fixedSize, options) {
 	var frameBounds = this.bounds[frame];
 	if (!frameBounds) {
 		return null;
@@ -224,6 +228,17 @@ SymbolInstance.prototype.constructFrame = function (frame, ratio, fixedSize) {
 	var y = frameBounds.top;
 	var w = frameBounds.right  - frameBounds.left;
 	var h = frameBounds.bottom - frameBounds.top;
+
+	if (options && options.wantedSize) {
+		const ratioWantedSize = Math.sqrt((options.wantedSize * options.wantedSize) / (Math.ceil(w * ratio) * Math.ceil(h * ratio)));
+		ratio *= ratioWantedSize;
+	}
+	if (options && options.maxImageDim) {
+		const ratioToMaxDim = Math.sqrt((options.maxImageDim * options.maxImageDim) / (Math.ceil(w * ratio) * Math.ceil(h * ratio)));
+		if (ratioToMaxDim < 1) {
+			ratio  *= ratioToMaxDim;
+		}
+	}
 
 	var filters = this.filters && this.filters[frame];
 	if (filters) {
@@ -308,7 +323,7 @@ CanvasRenderer.prototype._renderFrames = function (imageMap, spriteProperties) {
 		for (f = 0; f < nFrames; f += 1) {
 			var frame = frames[f];
 
-			var frameCanvas = instance.constructFrame(frame, ratio, fixedSize);
+			var frameCanvas = instance.constructFrame(frame, ratio, fixedSize, this._options);
 			if (!frameCanvas) {
 				continue;
 			}
@@ -476,7 +491,7 @@ CanvasRenderer.prototype.prerenderSymbols = function (symbols, sprites, imageMap
 		}
 
 		instance = new SymbolInstance(symbolId, bounds);
-		frameCanvas = instance.constructFrame(frame, ratio);
+		frameCanvas = instance.constructFrame(frame, ratio, undefined, this._options);
 		if (!frameCanvas) {
 			continue;
 		}
@@ -726,7 +741,7 @@ CanvasRenderer.prototype.prerenderSymbols = function (symbols, sprites, imageMap
 				}
 
 				var instance = new SymbolInstance(childId, [sprite.bounds], childFilters, blendModes);
-				var frameCanvas = instance.constructFrame(frame, ratio);
+				var frameCanvas = instance.constructFrame(frame, ratio, undefined, this._options);
 
 				// Testing whether sprite has already been rendered with identical dimensions
 				if (prerenderedFilteredElements[childId]) {

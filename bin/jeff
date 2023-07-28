@@ -16,6 +16,7 @@ program
 // Secondary options
 .option('-S, --scope <scope>',                          'Scope of the animation to export, either \'classes\' or \'main\'', 'main')
 .option('-r, --ratio <ratio>',                          'Image scale', '1')
+.option('-w, --wanted <size>',                          'Image size', '0')
 .option('-f, --renderFrames <boolean/array of frames>', 'To extract specified frames of the animations as PNGs', 'false')
 
 // Optimisation options
@@ -23,7 +24,7 @@ program
 .option('-p, --powerOf2Images <boolean>',               'To set the dimensions of output images to powers of 2', 'false')
 .option('-M, --maxImageDim <number>',                   'Maximum image dimension', '2048')
 .option('-b, --beautify <boolean>',                     'To beautify JSON output', 'false')
-.option('-c, --collapse <boolean>',                     'To extract a colapsed flat animation structure rather than a hierarchical structure', 'false')
+.option('-c, --collapse <boolean>',                     'To extract a collapsed flat animation structure rather than a hierarchical structure', 'false')
 .option('-B, --prerenderBlendings <boolean>',           'To prerender sprites with blend modes', 'false')
 
 // Advanced options
@@ -45,6 +46,7 @@ var exportParams = {
 	// Secondary options
 	scope:              program.scope,
 	ratio:              JSON.parse(program.ratio),
+	wantedSize:         JSON.parse(program.wanted),
 	renderFrames:       JSON.parse(program.renderFrames),
 
 	// Optimisation options

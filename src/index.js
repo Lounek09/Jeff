@@ -64,6 +64,7 @@ function JeffOptions(params) {
 	this.scope               = params.scope               || 'main';
 	this.renderFrames        = params.renderFrames        || false;
 	this.ratio               = params.ratio               || 1;
+	this.wantedSize					 = params.wantedSize          || 0;
 
 	// Optimisation options
 	this.createAtlas         = params.createAtlas         || false;
@@ -254,7 +255,7 @@ Jeff.prototype._parseFile = function (swfName, nextSwfCb) {
 						return;
 					}
 
-					if (this._options.verbosity >= 3) {
+					if (self._options.verbosity >= 3) {
 						console.warn('[Jeff.parseFile] swfObject not handled. Id = ' + swfObject.id);
 					}
 					return;
