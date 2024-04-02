@@ -1,6 +1,6 @@
-test
-test-output
-npm-debug.log
-node_modules
 .idea
 .vs
+node_modules
+bun.lockb
+test
+test-output

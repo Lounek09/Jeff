@@ -27,56 +27,18 @@ Made at [Wizcorp](http://www.wizcorp.jp).
 
 ## Install
 
-For command line usage:
-
 ```shell
-npm install jeff -g
-```
-
-For API usage:
-
-```shell
-npm install jeff
+git clone git@github.com:Lounek09/Jeff.git
+cd Jeff
+bun install
+bun link
 ```
 
 ## Usage
 
-Command line:
-
 ```shell
+jeff -h
 jeff -s mySwf.swf
-```
-
-API:
-
-```javascript
-var jeff = require('jeff');
-
-// Writing extracted data in current folder
-var options = {
-	source: 'mySwf.swf',
-	outDir: '.'
-};
-
-jeff(options);
-
-
-// Returning extracted data in a callback
-var options = {
-	source: 'mySwf.swf',
-	returnData: true
-};
-
-jeff(options, function (error, stats, extractedData) {
-	// Uncovering conversion stats
-	var nbFilesConverted = stats.files;
-	var nbErrors         = stats.errors;
-
-	// Fetching extracted data
-	var imageNames = extractedData.imageNames;
-	var image      = extractedData.images;
-	var data       = extractedData.data;
-});
 ```
 
 ### Operation
@@ -84,18 +46,5 @@ jeff(options, function (error, stats, extractedData) {
 * Will parse the input directory to find SWF files corresponding to the given source file pattern.
 * Will sequentially parse and process the SWF files.
 * Will export JSON meta-data and images corresponding to the SWF files.
-
-### Roadmap for unsupported features
-
-* Texts (Static/Dynamic)
-* Buttons
-* Embedded fonts
-* Sounds
-* ActionScript
-
-## Roadmap for extract options
-
-* Option to extract shapes under vectorial format
-* Option to extract meta-data under keyframe based format (as opposed to per frame transformation matrix)
 
 For contributors, see [SWF File Format Specifications](http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/swf/pdf/swf-file-format-spec.pdf)
