@@ -46,7 +46,7 @@ function inflate(strdata, onData) {
 
 function translateJpg(swfObject, whenDone) {
 	// Image creation
-	var uri = 'data:image/jpeg;base64,' + Buffer.from(swfObject.data).toString('base64');
+	var uri = Buffer.from('data:image/jpeg;base64,' + swfObject.data.toString('base64'));
 	var image = new Image();
 	image.src = uri;
 
